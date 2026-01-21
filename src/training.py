@@ -46,7 +46,7 @@ def evaluate(model, data_loader, loss_fn, device):
     loop.set_postfix(loss=np.mean(losses))
     return np.mean(losses)
 
-def train(model, train_loader, valid_loader, epochs=20, learning_rate=1e-3):
+def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate=1e-3):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -66,5 +66,10 @@ def train(model, train_loader, valid_loader, epochs=20, learning_rate=1e-3):
             best_loss = valid_loss
             best_model = model.state_dict()
             torch.save(best_model, "models/best_model.pth")
+    
+    if best_model is None:
+        raise ValueError("No best model was saved during training.")
 
     print("Training complete.")
+
+    return best_model
