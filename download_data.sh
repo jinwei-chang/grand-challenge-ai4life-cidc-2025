@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 FOLDER_NAME="downloads/ai4life-cidc2025"
 FOLDER_ID="1WRDDSeQ-8Dqa_5zboBn-jX9-s97eZD5F"
 
@@ -10,5 +9,7 @@ else
     echo "資料夾 '$FOLDER_NAME' 已存在，跳過下載。"
 fi
 
-ln -s downloads/ai4life-cidc2025/train/* data/train/
-ln -s downloads/ai4life-cidc2025/valid/* data/valid/
+mkdir -p data/train data/valid
+
+ln -sf $(pwd)/downloads/ai4life-cidc2025/train/* data/train/
+ln -sf $(pwd)/downloads/ai4life-cidc2025/valid/* data/valid/

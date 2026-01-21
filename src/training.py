@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
+import pathlib
 
 def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
     model.train()
@@ -55,6 +56,8 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
     loss_fn = nn.MSELoss()
 
     best_loss = float("inf")
+    models_path = pathlib.Path("models")
+    models_path.mkdir(parents=True, exist_ok=True)
     best_model = None
 
     for epoch in range(epochs):
@@ -65,7 +68,7 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
         if valid_loss < best_loss:
             best_loss = valid_loss
             best_model = model.state_dict()
-            torch.save(best_model, "models/best_model.pth")
+            torch.save(model, models_path / "best_full_model.pth")
     
     if best_model is None:
         raise ValueError("No best model was saved during training.")

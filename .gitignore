@@ -1,9 +1,6 @@
 # exclude datasets and model weights
 data/*
-!data/train/.gitkeep
-!data/valid/.gitkeep
 models/*
-!models/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

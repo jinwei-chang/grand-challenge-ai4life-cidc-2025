@@ -2,7 +2,7 @@ import pathlib, os
 import tifffile
 
 from dataset import CalciumDataset
-from models.unet import UNet
+from model_arch.unet import UNet
 from training import train
 
 import random

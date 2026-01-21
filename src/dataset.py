@@ -38,7 +38,24 @@ class CalciumDataset(Dataset):
             masked_patch, mask = self.n2v_mask(patch_tensor)
             return masked_patch, mask, patch_tensor
         elif len(self.patch_size) == 3:
-            raise NotImplementedError("3D patches not implemented")
+            image_idx = np.random.randint(len(self.images))
+            image = self.images[image_idx]
+            lower, upper = self.normals[image_idx]
+
+            d_max, h_max, w_max = image.shape
+            d_start = np.random.randint(d_max - self.patch_size[0])
+            h_start = np.random.randint(h_max - self.patch_size[1])
+            w_start = np.random.randint(w_max - self.patch_size[2])
+
+            patch = image[d_start:d_start+self.patch_size[0],
+                          h_start:h_start+self.patch_size[1],
+                          w_start:w_start+self.patch_size[2]]
+            patch = np.clip(patch, lower, upper)
+            patch = (patch - lower) / (upper - lower + 1e-8)
+            patch_tensor = torch.from_numpy(patch).unsqueeze(0).float()
+
+            masked_patch, mask = self.n2v_mask(patch_tensor)
+            return masked_patch, mask, patch_tensor
         else:
             raise ValueError("Invalid patch size")
 
