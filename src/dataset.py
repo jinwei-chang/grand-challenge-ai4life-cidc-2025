@@ -50,7 +50,7 @@ class CalciumDataset(Dataset):
         mask = rand_tensor < mask_ratio
 
         masked_img = img.clone()
-        fill_values = torch.randn(mask.sum()) * img.std() + img.mean()
+        fill_values = torch.randn(int(mask.sum())) * img.std() + img.mean()
         masked_img[mask] = fill_values
 
         return masked_img, mask
