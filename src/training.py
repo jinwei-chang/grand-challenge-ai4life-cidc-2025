@@ -69,6 +69,8 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
             best_loss = valid_loss
             best_model = model.state_dict()
             torch.save(model, models_path / "best_full_model.pth")
+            torch.save(best_model, models_path / "best_model_state_dict.pth")
+            print(f"Best model saved with loss: {best_loss}")
     
     if best_model is None:
         raise ValueError("No best model was saved during training.")
