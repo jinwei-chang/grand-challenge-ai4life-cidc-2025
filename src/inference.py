@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,18 +55,6 @@ def denoise_frame(model, frame, device, patch_size, slide_window=16, batch_size=
         denoised_frame = denoised_frame[:, :, slide_window:-slide_window, slide_window:-slide_window]
     return denoised_frame
 
-def denoise_multi_frame(model, frames, device, patch_size, slide_window=16, batch_size=16):
-    model.eval()
-
-    denoised_frames = torch.zeros_like(frames)
-    loop = tqdm(range(frames.shape[0]), leave=True)
-    for t in loop:
-        frame = frames[t].to(device)
-        denoised_frame = denoise_frame(model, frame, device, patch_size, slide_window, batch_size)
-        denoised_frames[t] = denoised_frame
-    # print(denoised_frame)
-    return denoised_frames
-
 
 def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
     if len(patch_size) != 3:
@@ -113,15 +102,36 @@ def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
         denoised_volume = denoised_volume[:, :, slide_window:-slide_window, slide_window:-slide_window, slide_window:-slide_window]
     return denoised_volume
 
-
-
-def denoise_video(model, video, patch_size):
+def denoise_video(model, video, patch_size, slide_window=16, batch_size=16):
     model.eval()
-    video = torch.from_numpy(video).to(device)
+    model.to(device)
+
+    if isinstance(video, np.ndarray):
+        video = torch.from_numpy(video)
+    
+    video = video.to(device)
+    
     
     if len(patch_size) == 2:
-        return denoise_multi_frame(model, video, device, patch_size, slide_window=16, batch_size=16)
+        denoised_frames = torch.zeros_like(video)
+        loop = tqdm(range(video.shape[0]), leave=True)
+        for t in loop:
+            frame = video[t]
+            denoised_frame = denoise_frame(model, frame, device, patch_size, slide_window=slide_window, batch_size=batch_size)
+            denoised_frames[t] = denoised_frame.squeeze()
+        return denoised_frames
     elif len(patch_size) == 3:
-        return denoise_volume(model, video, patch_size, slide_window=8, batch_size=4)
+        denoised_frames = torch.zeros_like(video)
+        loop = tqdm(range(video.shape[0] // patch_size[0]), leave=True)
+        for t in loop:
+            start_idx = t * patch_size[0]
+            end_idx = start_idx + patch_size[0]
+            volume_part = video[start_idx:end_idx]
+            denoised_volume_part = denoise_volume(model, volume_part, patch_size, slide_window=slide_window, batch_size=batch_size)
+            denoised_frames[start_idx:end_idx] = denoised_volume_part.squeeze()
+
+        return denoised_frames
+        # part_frames = denoised_frames
+        # return denoise_volume(model, video, patch_size, slide_window=slide_window, batch_size=batch_size).squeeze()
     else:
         raise ValueError("Invalid patch size")
