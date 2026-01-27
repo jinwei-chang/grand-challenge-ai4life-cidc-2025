@@ -1,5 +1,7 @@
 {
     "recommendations": [
-        "google.geminicodeassist"
+        "google.geminicodeassist",
+        "ms-python.python",
+        "ms-toolsai.jupyter"
     ]
 }
