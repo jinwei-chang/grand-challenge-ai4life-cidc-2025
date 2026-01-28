@@ -6,6 +6,7 @@
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
 ```
 
 ## Install dependencies
@@ -24,7 +25,7 @@ uv run ./download_data.sh
 
 ## Jupyter Notebook
 
-Open `notebook.ipynb` to execute block by block.
+Open `notebook.ipynb` to execute block by block. MUST check the parameters block to setup constant variables.
 
 ## Python
 

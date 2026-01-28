@@ -102,7 +102,7 @@ def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
         denoised_volume = denoised_volume[:, :, slide_window:-slide_window, slide_window:-slide_window, slide_window:-slide_window]
     return denoised_volume
 
-def denoise_video(model, video, patch_size, slide_window=16, batch_size=16):
+def denoise_video(model, video, patch_size, slide_window=16, batch_size=16, skip_frame=False):
     model.eval()
     model.to(device)
 
@@ -119,6 +119,10 @@ def denoise_video(model, video, patch_size, slide_window=16, batch_size=16):
             frame = video[t]
             denoised_frame = denoise_frame(model, frame, device, patch_size, slide_window=slide_window, batch_size=batch_size)
             denoised_frames[t] = denoised_frame.squeeze()
+
+            if skip_frame:
+                print("Skipping remaining frames for testing purposes.")
+                break
         return denoised_frames
     elif len(patch_size) == 3:
         denoised_frames = torch.zeros_like(video)
@@ -129,6 +133,10 @@ def denoise_video(model, video, patch_size, slide_window=16, batch_size=16):
             volume_part = video[start_idx:end_idx]
             denoised_volume_part = denoise_volume(model, volume_part, patch_size, slide_window=slide_window, batch_size=batch_size)
             denoised_frames[start_idx:end_idx] = denoised_volume_part.squeeze()
+
+            if skip_frame:
+                print("Skipping remaining frames for testing purposes.")
+                break
 
         return denoised_frames
         # part_frames = denoised_frames

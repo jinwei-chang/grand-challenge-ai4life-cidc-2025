@@ -129,13 +129,18 @@ class DoubleConvnmODE(nn.Module):
     """
     def __init__(self, in_channels, out_channels):
         super().__init__()
+
+        groups = 8 if out_channels % 8 == 0 else 1
+
         self.double_conv = nn.Sequential(
             nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.GroupNorm(groups, out_channels),
+            # nn.ReLU(inplace=True),
+            nn.SiLU(inplace=True),
             nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.GroupNorm(groups, out_channels),
+            # nn.ReLU(inplace=True)
+            nn.SiLU(inplace=True),
         )
 
     def forward(self, x):
