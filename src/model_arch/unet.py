@@ -18,7 +18,7 @@ class DoubleConv(nn.Module):
         return self.double_conv(x)
 
 class UNet(nn.Module):
-    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128, 256]):
+    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128]):
         super().__init__()
         self.downs = nn.ModuleList()
         self.ups = nn.ModuleList()
@@ -80,7 +80,7 @@ class DoubleConv3D(nn.Module):
 
 
 class UNet3D(nn.Module):
-    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128, 256]):
+    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128]):
         super().__init__()
         self.downs = nn.ModuleList()
         self.ups = nn.ModuleList()
@@ -182,7 +182,7 @@ class ODEBlock(nn.Module):
 
 
 class UNetnmODE(nn.Module):
-    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128, 256]):
+    def __init__(self, in_channels=1, out_channels=1, features=[32, 64, 128]):
         super().__init__()
         self.downs = nn.ModuleList()
         self.ups = nn.ModuleList()

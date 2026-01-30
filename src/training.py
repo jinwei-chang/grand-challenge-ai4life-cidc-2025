@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 import pathlib
+from datetime import datetime
 
 def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
     model.train()
@@ -60,6 +61,8 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
     models_path.mkdir(parents=True, exist_ok=True)
     best_model = None
 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}/{epochs}")
         train_loss = train_one_epoch(model, train_loader, loss_fn, optimizer, device)
@@ -68,8 +71,15 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
         if valid_loss < best_loss:
             best_loss = valid_loss
             best_model = model.state_dict()
-            torch.save(model, models_path / "best_full_model.pth")
-            torch.save(best_model, models_path / "best_model_state_dict.pth")
+
+            # save latest full model and best model state dict
+            torch.save(model, models_path / f"best_full_model.pth")
+            torch.save(best_model, models_path / f"best_model_state_dict.pth")
+
+            # save with timestamp and epoch
+            torch.save(model, models_path / f"best_full_model_{timestamp}_{epoch}.pth")
+            torch.save(best_model, models_path / f"best_model_state_dict_{timestamp}_{epoch}.pth")
+            
             print(f"Best model saved with loss: {best_loss}")
     
     if best_model is None:
