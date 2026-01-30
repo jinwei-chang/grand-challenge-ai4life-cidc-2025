@@ -13,7 +13,10 @@ class CalciumDataset(Dataset):
         for tiff_path in tiff_paths:
             image = tifffile.imread(tiff_path)
 
-            self.normals.append((-100.0, 1500.0))
+            lower, upper = np.percentile(image, (3, 97))
+
+            # self.normals.append((-100.0, 1500.0))
+            self.normals.append((lower, upper))
             self.images.append(image)
 
     def __len__(self):

@@ -5,14 +5,14 @@ import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def denoise_frame(model, frame, device, patch_size, slide_window=16, batch_size=16):
+def denoise_frame(model, frame, device, patch_size, slide_window=(16, 16), batch_size=16):
     model.eval()
     if len(patch_size) != 2:
         raise ValueError("Patch size must be a tuple of length 2")
 
     frame = frame.unsqueeze(0).unsqueeze(0).float()
 
-    padding_frame = F.pad(frame, (slide_window, slide_window, slide_window, slide_window), mode='reflect')
+    padding_frame = F.pad(frame, (slide_window[1], slide_window[1], slide_window[0], slide_window[0]), mode='reflect')
     padding_frame = padding_frame.to(device)
 
     output_sum = torch.zeros_like(padding_frame)
@@ -25,8 +25,8 @@ def denoise_frame(model, frame, device, patch_size, slide_window=16, batch_size=
 
     with torch.no_grad():
         denoised_frame = torch.zeros_like(padding_frame)
-        for h in range(0, padding_frame.shape[2] - patch_size[0] + 1, slide_window):
-            for w in range(0, padding_frame.shape[3] - patch_size[1] + 1, slide_window):
+        for h in range(0, padding_frame.shape[2] - patch_size[0] + 1, slide_window[0]):
+            for w in range(0, padding_frame.shape[3] - patch_size[1] + 1, slide_window[1]):
                 patch = padding_frame[:, :, h:h+patch_size[0], w:w+patch_size[1]]
                 batch_patches.append(patch)
                 batch_coords.append((h, w))
@@ -52,18 +52,18 @@ def denoise_frame(model, frame, device, patch_size, slide_window=16, batch_size=
 
         count_map[count_map == 0] = 1.0
         denoised_frame = output_sum / count_map
-        denoised_frame = denoised_frame[:, :, slide_window:-slide_window, slide_window:-slide_window]
+        denoised_frame = denoised_frame[:, :, slide_window[0]:-slide_window[0], slide_window[1]:-slide_window[1]]
     return denoised_frame
 
 
-def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
+def denoise_volume(model, volume, patch_size, slide_window=(4, 16, 16), batch_size=4):
     if len(patch_size) != 3:
         raise ValueError("Patch size must be a tuple of length 3 for 3D denoising")  
 
     volume = volume.unsqueeze(0).unsqueeze(0).float()
     volume = volume.to(device)
 
-    padding_volume = F.pad(volume, (slide_window, slide_window, slide_window, slide_window, slide_window, slide_window), mode='reflect')
+    padding_volume = F.pad(volume, (slide_window[2], slide_window[2], slide_window[1], slide_window[1], slide_window[0], slide_window[0]), mode='reflect')
 
     output_sum = torch.zeros_like(padding_volume)
     count_map = torch.zeros_like(padding_volume)
@@ -74,9 +74,9 @@ def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
     _, _, d_pad, h_pad, w_pad = padding_volume.shape
 
     with torch.no_grad():
-        for d in range(0, d_pad - patch_size[0] + 1, slide_window):
-            for h in range(0, h_pad - patch_size[1] + 1, slide_window):
-                for w in range(0, w_pad - patch_size[2] + 1, slide_window):
+        for d in range(0, d_pad - patch_size[0] + 1, slide_window[0]):
+            for h in range(0, h_pad - patch_size[1] + 1, slide_window[1]):
+                for w in range(0, w_pad - patch_size[2] + 1, slide_window[2]):
                     patch = padding_volume[:, :, d:d+patch_size[0], h:h+patch_size[1], w:w+patch_size[2]]
                     batch_patches.append(patch)
                     batch_coords.append((d, h, w))
@@ -99,10 +99,14 @@ def denoise_volume(model, volume, patch_size, slide_window=8, batch_size=4):
 
         count_map[count_map == 0] = 1.0
         denoised_volume = output_sum / count_map
-        denoised_volume = denoised_volume[:, :, slide_window:-slide_window, slide_window:-slide_window, slide_window:-slide_window]
+        denoised_volume = denoised_volume[:, :, slide_window[0]:-slide_window[0], slide_window[1]:-slide_window[1], slide_window[2]:-slide_window[2]]
     return denoised_volume
 
-def denoise_video(model, video, patch_size, slide_window=16, batch_size=16, skip_frame=False):
+def denoise_video(model, video, patch_size, slide_window, batch_size=16, skip_frame=False):
+
+    if len(patch_size) != len(slide_window):
+        raise ValueError("Patch size and slide window must have the same length")
+
     model.eval()
     model.to(device)
 
@@ -126,7 +130,8 @@ def denoise_video(model, video, patch_size, slide_window=16, batch_size=16, skip
         return denoised_frames
     elif len(patch_size) == 3:
         denoised_frames = torch.zeros_like(video)
-        loop = tqdm(range(video.shape[0] // patch_size[0]), leave=True)
+        time_volumes = video.shape[0] // patch_size[0] + (1 if video.shape[0] % patch_size[0] != 0 else 0)
+        loop = tqdm(range(time_volumes), leave=True)
         for t in loop:
             start_idx = t * patch_size[0]
             end_idx = start_idx + patch_size[0]
