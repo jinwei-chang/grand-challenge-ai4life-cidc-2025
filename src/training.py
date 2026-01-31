@@ -81,8 +81,8 @@ def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate
             torch.save(best_model, models_path / f"best_model_state_dict.pth")
 
             # save with timestamp and epoch
-            torch.save(model, models_path / f"best_full_model_{timestamp}_{epoch}.pth")
-            torch.save(best_model, models_path / f"best_model_state_dict_{timestamp}_{epoch}.pth")
+            torch.save(model, models_path / f"best_full_model_{timestamp}_{epoch+1}.pth")
+            torch.save(best_model, models_path / f"best_model_state_dict_{timestamp}_{epoch+1}.pth")
             
             print(f"Best model saved with loss: {best_loss}")
     
