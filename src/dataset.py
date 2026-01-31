@@ -42,7 +42,8 @@ class CalciumDataset(Dataset):
         if self.subset == "valid":
             rng = np.random.default_rng(seed=self.base_seed + idx)
         else:
-            rng = np.random.default_rng(None)
+            seed = np.random.randint(0, 2**32)
+            rng = np.random.default_rng(seed=seed)
 
         if len(self.patch_size) == 2:
             # image_idx = np.random.randint(len(self.images))
@@ -64,7 +65,8 @@ class CalciumDataset(Dataset):
             patch_tensor = torch.from_numpy(patch).unsqueeze(0).float()
 
             """ Apply data augmentation """
-            patch_tensor = self.apply_augmentation(patch_tensor, rng)
+            if self.subset == "train":
+                patch_tensor = self.apply_augmentation(patch_tensor, rng)
 
             masked_patch, mask = self.n2v_mask(patch_tensor, rng)
 
@@ -88,21 +90,32 @@ class CalciumDataset(Dataset):
             patch_tensor = torch.from_numpy(patch).unsqueeze(0).float()
 
             """ Apply data augmentation """
-            patch_tensor = self.apply_augmentation(patch_tensor, rng)
+            if self.subset == "train":
+                patch_tensor = self.apply_augmentation(patch_tensor, rng)
 
             masked_patch, mask = self.n2v_mask(patch_tensor, rng)
-            
+
             return masked_patch, mask, patch_tensor
         else:
             raise ValueError("Invalid patch size")
 
-    def apply_augmentation(self, patch, rng: np.random.Generator):
+    def apply_augmentation(self, patch, rng: np.random.Generator, mock=False):
 
 
         """ Brightness adjustment """
         min_scale, max_scale = 0.6, 1.4
         scale_factor = rng.uniform(min_scale, max_scale)
         patch_aug = patch * scale_factor
+
+        """ Random rotation and flip """
+        rot_k = rng.integers(0, 4)
+        patch_aug = torch.rot90(patch_aug, int(rot_k), dims=(-2, -1))
+
+        if rng.integers(0, 2) == 1:
+            patch_aug = torch.flip(patch_aug, dims=(-1,))
+
+        if mock:
+            return patch_aug, scale_factor, rot_k
 
         return patch_aug
 

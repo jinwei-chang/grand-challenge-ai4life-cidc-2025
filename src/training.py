@@ -12,6 +12,7 @@ def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
 
     loop = tqdm(data_loader, leave=True)
     losses = []
+
     for batch_idx, (masked, mask, target) in enumerate(loop):
         masked = masked.to(device)
         mask = mask.to(device)
@@ -23,10 +24,12 @@ def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
         loss.backward()
         optimizer.step()
 
+        losses.append(loss.item())
         loop.set_postfix(loss=loss.item())
 
-    loop.set_postfix(loss=np.mean(losses))
-    return np.mean(losses)
+    mean_loss = np.mean(losses)
+    loop.set_postfix(loss=mean_loss)
+    return mean_loss
 
 def evaluate(model, data_loader, loss_fn, device):
     model.eval()
@@ -45,8 +48,9 @@ def evaluate(model, data_loader, loss_fn, device):
 
         loop.set_postfix(loss=loss.item())
 
-    loop.set_postfix(loss=np.mean(losses))
-    return np.mean(losses)
+    mean_loss = np.mean(losses)
+    loop.set_postfix(loss=mean_loss)
+    return mean_loss
 
 def train(model: nn.Module, train_loader, valid_loader, epochs=20, learning_rate=1e-3):
 
