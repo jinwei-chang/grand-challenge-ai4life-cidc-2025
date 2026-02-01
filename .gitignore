@@ -1,6 +1,8 @@
 # exclude datasets and model weights
 data/*
 models/*
+demo/*
+animations/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
